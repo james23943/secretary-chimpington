@@ -41,8 +41,8 @@ class Confessions(commands.Cog):
     
     @app_commands.command(name="confess", description="Submit an anonymous confession")
     async def confess(
-        self, 
-        interaction: discord.Interaction, 
+        self,
+        interaction: discord.Interaction,
         confession: str,
         image: discord.Attachment = None
     ):
@@ -60,12 +60,12 @@ class Confessions(commands.Cog):
         embed = discord.Embed(
             title=f"Confession #{self.confession_count}",
             description=f"\"{confession}\"",
-            color=discord.Color.random()
+            color=int(random.randint(0, 0xFFFFFF))  # Fixed random color
         )
         
-        # Add random emoji footer
+        # Updated footer text with random emoji
         random_emoji = random.choice(self.emojis)
-        embed.set_footer(text=random_emoji)
+        embed.set_footer(text=f"Do /confess to share your confession anonymously {random_emoji}")
         
         # Add image if provided
         if image:
@@ -76,6 +76,5 @@ class Confessions(commands.Cog):
             ephemeral=True
         )
         await interaction.channel.send(embed=embed, view=ConfessionView())
-
 async def setup(bot):
     await bot.add_cog(Confessions(bot))
