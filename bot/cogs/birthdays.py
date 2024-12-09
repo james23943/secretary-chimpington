@@ -2,9 +2,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
-from typing import Optional
 import asyncio
 
 class BirthdayPageView(discord.ui.View):
@@ -62,7 +61,7 @@ class Birthdays(commands.Cog):
 
     @app_commands.command(name="birthday")
     @app_commands.describe(
-        subcommand="Choose 'set' to set your birthday or 'list' to view birthdays",
+        subcommand="Choose whether to set your birthday or list all birthdays",
         day="Day of your birthday (1-31)",
         month="Month of your birthday (1-12)",
         timezone="Your timezone (Example: UTC+10, America/New_York)"
@@ -75,9 +74,9 @@ class Birthdays(commands.Cog):
         self,
         interaction: discord.Interaction,
         subcommand: str,
-        day: Optional[int] = None,
-        month: Optional[int] = None,
-        timezone: Optional[str] = None
+        day: int = None,
+        month: int = None,
+        timezone: str = None
     ):
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
@@ -117,55 +116,44 @@ class Birthdays(commands.Cog):
                 f"Birthday set to {month}/{day} ({timezone})!",
                 ephemeral=True
             )
-
+            
         elif subcommand == "list":
-            # Your list logic here
-            pass
-    @app_commands.command(name="birthday list", description="List all birthdays")
-    async def birthday_list(self, interaction: discord.Interaction):
-        if interaction.channel_id != self.birthday_channel_id:
+            if not self.birthdays:
+                await interaction.response.send_message(
+                    "No birthdays set yet!",
+                    ephemeral=True
+                )
+                return
+            
+            sorted_birthdays = sorted(
+                self.birthdays.items(),
+                key=lambda x: (x[1]['month'], x[1]['day'])
+            )
+            
+            pages = []
+            items_per_page = 30
+            
+            for i in range(0, len(sorted_birthdays), items_per_page):
+                page_birthdays = sorted_birthdays[i:i + items_per_page]
+                
+                description = "Use `/birthday set` to add your birthday!\n\n"
+                for user_id, bday in page_birthdays:
+                    user = interaction.guild.get_member(int(user_id))
+                    if user:
+                        description += f"{bday['month']}/{bday['day']} - {user.name}\n"
+                
+                embed = discord.Embed(
+                    title="Birthday List",
+                    description=description,
+                    color=discord.Color.purple()
+                )
+                embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
+                pages.append(embed)
+            
             await interaction.response.send_message(
-                "This command can only be used in the birthdays channel!",
-                ephemeral=True
+                embed=pages[0],
+                view=BirthdayPageView(pages)
             )
-            return
-            
-        if not self.birthdays:
-            await interaction.response.send_message(
-                "No birthdays set yet!",
-                ephemeral=True
-            )
-            return
-        
-        sorted_birthdays = sorted(
-            self.birthdays.items(),
-            key=lambda x: (x[1]['month'], x[1]['day'])
-        )
-        
-        pages = []
-        items_per_page = 30
-        
-        for i in range(0, len(sorted_birthdays), items_per_page):
-            page_birthdays = sorted_birthdays[i:i + items_per_page]
-            
-            description = "Use `/birthday set` to add your birthday!\n\n"
-            for user_id, bday in page_birthdays:
-                user = interaction.guild.get_member(int(user_id))
-                if user:
-                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"
-            
-            embed = discord.Embed(
-                title="Birthday List",
-                description=description,
-                color=discord.Color.purple()
-            )
-            embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
-            pages.append(embed)
-        
-        await interaction.response.send_message(
-            embed=pages[0],
-            view=BirthdayPageView(pages)
-        )
 
     async def birthday_check_loop(self):
         await self.bot.wait_until_ready()
