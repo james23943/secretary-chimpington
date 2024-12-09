@@ -4,10 +4,10 @@ from discord import app_commands
 import json
 from pathlib import Path
 import random
-import emoji
+
 class ConfessionReplyButton(discord.ui.Button):
     def __init__(self):
-        super().__init__(label="Reply", style=discord.ButtonStyle.blurple)
+        super().__init__(label="Reply", style=discord.ButtonStyle.gray)
     
     async def callback(self, interaction: discord.Interaction):
         thread_name = f"Replies to {interaction.message.embeds[0].title}"
@@ -24,7 +24,6 @@ class Confessions(commands.Cog):
         self.bot = bot
         self.confession_count = self.load_count()
         self.confession_channel_id = 1176076931217756180
-        self.emojis = list(emoji.EMOJI_DATA.keys())
     
     def load_count(self):
         try:
@@ -41,8 +40,8 @@ class Confessions(commands.Cog):
     
     @app_commands.command(name="confess", description="Submit an anonymous confession")
     async def confess(
-        self,
-        interaction: discord.Interaction,
+        self, 
+        interaction: discord.Interaction, 
         confession: str,
         image: discord.Attachment = None
     ):
@@ -60,12 +59,11 @@ class Confessions(commands.Cog):
         embed = discord.Embed(
             title=f"Confession #{self.confession_count}",
             description=f"\"{confession}\"",
-            color=int(random.randint(0, 0xFFFFFF))  # Fixed random color
+            color=int(random.randint(0, 0xFFFFFF))
         )
         
-        # Updated footer text with random emoji
-        random_emoji = random.choice(self.emojis)
-        embed.set_footer(text=f"Do /confess to share your confession anonymously {random_emoji}")
+        # Set footer with red exclamation mark
+        embed.set_footer(text="❗ Use /confess to share anonymously!")
         
         # Add image if provided
         if image:
@@ -76,5 +74,6 @@ class Confessions(commands.Cog):
             ephemeral=True
         )
         await interaction.channel.send(embed=embed, view=ConfessionView())
+
 async def setup(bot):
     await bot.add_cog(Confessions(bot))
