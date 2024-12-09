@@ -60,18 +60,24 @@ class Birthdays(commands.Cog):
         with open('active_birthday_roles.json', 'w') as f:
             json.dump(self.active_birthday_roles, f)
 
-    @app_commands.command(name="birthday", description="Set your birthday")
+    @app_commands.command(name="birthday")
     @app_commands.describe(
+        subcommand="Choose 'set' to set your birthday or 'list' to view birthdays",
         day="Day of your birthday (1-31)",
         month="Month of your birthday (1-12)",
         timezone="Your timezone (Example: UTC+10, America/New_York)"
     )
+    @app_commands.choices(subcommand=[
+        app_commands.Choice(name="set", value="set"),
+        app_commands.Choice(name="list", value="list")
+    ])
     async def birthday(
         self,
         interaction: discord.Interaction,
-        day: int,
-        month: int,
-        timezone: str
+        subcommand: str,
+        day: Optional[int] = None,
+        month: Optional[int] = None,
+        timezone: Optional[str] = None
     ):
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
@@ -79,31 +85,42 @@ class Birthdays(commands.Cog):
                 ephemeral=True
             )
             return
-        
-        try:
-            # Validate timezone
-            pytz.timezone(timezone)
-            # Validate date
-            datetime(2000, month, day)
-        except (ValueError, pytz.exceptions.UnknownTimeZoneError):
+
+        if subcommand == "set":
+            if not all([day, month, timezone]):
+                await interaction.response.send_message(
+                    "Please provide day, month, and timezone.",
+                    ephemeral=True
+                )
+                return
+                
+            try:
+                # Validate timezone
+                pytz.timezone(timezone)
+                # Validate date
+                datetime(2000, month, day)
+            except (ValueError, pytz.exceptions.UnknownTimeZoneError):
+                await interaction.response.send_message(
+                    "Invalid date or timezone! Please check your input.",
+                    ephemeral=True
+                )
+                return
+            
+            self.birthdays[str(interaction.user.id)] = {
+                "day": day,
+                "month": month,
+                "timezone": timezone
+            }
+            self.save_birthdays()
+            
             await interaction.response.send_message(
-                "Invalid date or timezone! Please check your input.",
+                f"Birthday set to {month}/{day} ({timezone})!",
                 ephemeral=True
             )
-            return
-        
-        self.birthdays[str(interaction.user.id)] = {
-            "day": day,
-            "month": month,
-            "timezone": timezone
-        }
-        self.save_birthdays()
-        
-        await interaction.response.send_message(
-            f"Birthday set to {month}/{day} ({timezone})!",
-            ephemeral=True
-        )
 
+        elif subcommand == "list":
+            # Your list logic here
+            pass
     @app_commands.command(name="birthday list", description="List all birthdays")
     async def birthday_list(self, interaction: discord.Interaction):
         if interaction.channel_id != self.birthday_channel_id:
