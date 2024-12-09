@@ -60,18 +60,13 @@ class Birthdays(commands.Cog):
         with open('active_birthday_roles.json', 'w') as f:
             json.dump(self.active_birthday_roles, f)
 
-    @app_commands.command(name="birthday", description="Set or list birthdays")
-    @app_commands.choices(action=[
-        app_commands.Choice(name="set", value="set"),
-        app_commands.Choice(name="list", value="list")
-    ])
-    async def birthday(
-        self, 
-        interaction: discord.Interaction, 
-        action: str,
-        day: Optional[int] = None,
-        month: Optional[int] = None,
-        timezone: Optional[str] = None
+    @app_commands.command(name="birthday_set", description="Set your birthday")
+    async def birthday_set(
+        self,
+        interaction: discord.Interaction,
+        day: int,
+        month: int,
+        timezone: str
     ):
         # Check if command is used in birthday channel
         if interaction.channel_id != self.birthday_channel_id:
@@ -80,76 +75,76 @@ class Birthdays(commands.Cog):
                 ephemeral=True
             )
             return
-
-        if action == "set":
-            if not all([day, month, timezone]):
-                await interaction.response.send_message(
-                    "Please provide day, month, and timezone.\nExample: `/birthday set day:25 month:12 timezone:UTC`", 
-                    ephemeral=True
-                )
-                return
-                
-            try:
-                # Validate timezone
-                pytz.timezone(timezone)
-                # Validate date
-                datetime(2000, month, day)
-            except (ValueError, pytz.exceptions.UnknownTimeZoneError):
-                await interaction.response.send_message(
-                    "Invalid date or timezone! Please check your input.", 
-                    ephemeral=True
-                )
-                return
             
-            self.birthdays[str(interaction.user.id)] = {
-                "day": day,
-                "month": month,
-                "timezone": timezone
-            }
-            self.save_birthdays()
-            
+        try:
+            # Validate timezone
+            pytz.timezone(timezone)
+            # Validate date
+            datetime(2000, month, day)
+        except (ValueError, pytz.exceptions.UnknownTimeZoneError):
             await interaction.response.send_message(
-                f"Birthday set to {month}/{day} ({timezone})!", 
+                "Invalid date or timezone! Please check your input.\nTimezone examples: UTC, UTC+10, America/New_York",
                 ephemeral=True
             )
-            
-        elif action == "list":
-            if not self.birthdays:
-                await interaction.response.send_message(
-                    "No birthdays set yet!", 
-                    ephemeral=True
-                )
-                return
-            
-            sorted_birthdays = sorted(
-                self.birthdays.items(),
-                key=lambda x: (x[1]['month'], x[1]['day'])
-            )
-            
-            pages = []
-            items_per_page = 30
-            
-            for i in range(0, len(sorted_birthdays), items_per_page):
-                page_birthdays = sorted_birthdays[i:i + items_per_page]
-                
-                description = "Use `/birthday set` to add your birthday!\n\n"
-                for user_id, bday in page_birthdays:
-                    user = interaction.guild.get_member(int(user_id))
-                    if user:
-                        description += f"{bday['month']}/{bday['day']} - {user.name}\n"
-                
-                embed = discord.Embed(
-                    title="Birthday List",
-                    description=description,
-                    color=discord.Color.purple()
-                )
-                embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
-                pages.append(embed)
-            
+            return
+        
+        self.birthdays[str(interaction.user.id)] = {
+            "day": day,
+            "month": month,
+            "timezone": timezone
+        }
+        self.save_birthdays()
+        
+        await interaction.response.send_message(
+            f"Birthday set to {month}/{day} ({timezone})!",
+            ephemeral=True
+        )
+
+    @app_commands.command(name="birthday_list", description="List all birthdays")
+    async def birthday_list(self, interaction: discord.Interaction):
+        if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
-                embed=pages[0],
-                view=BirthdayPageView(pages)
+                "This command can only be used in the birthdays channel!",
+                ephemeral=True
             )
+            return
+            
+        if not self.birthdays:
+            await interaction.response.send_message(
+                "No birthdays set yet!",
+                ephemeral=True
+            )
+            return
+        
+        sorted_birthdays = sorted(
+            self.birthdays.items(),
+            key=lambda x: (x[1]['month'], x[1]['day'])
+        )
+        
+        pages = []
+        items_per_page = 30
+        
+        for i in range(0, len(sorted_birthdays), items_per_page):
+            page_birthdays = sorted_birthdays[i:i + items_per_page]
+            
+            description = "Use `/birthday_set` to add your birthday!\n\n"
+            for user_id, bday in page_birthdays:
+                user = interaction.guild.get_member(int(user_id))
+                if user:
+                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"
+            
+            embed = discord.Embed(
+                title="Birthday List",
+                description=description,
+                color=discord.Color.purple()
+            )
+            embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
+            pages.append(embed)
+        
+        await interaction.response.send_message(
+            embed=pages[0],
+            view=BirthdayPageView(pages)
+        )
 
     async def birthday_check_loop(self):
         await self.bot.wait_until_ready()
