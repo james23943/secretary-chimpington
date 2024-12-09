@@ -22,7 +22,11 @@ async def load_extensions():
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    # Clear all existing commands
+    bot.tree.clear_commands(guild=None)
+    # Load new commands
     await load_extensions()
+    # Sync changes
     await bot.tree.sync()  # Sync slash commands
 
 # Run the bot
