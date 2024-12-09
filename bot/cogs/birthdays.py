@@ -60,22 +60,26 @@ class Birthdays(commands.Cog):
         with open('active_birthday_roles.json', 'w') as f:
             json.dump(self.active_birthday_roles, f)
 
-    @app_commands.command(name="birthday_set", description="Set your birthday")
-    async def birthday_set(
+    @app_commands.command(name="birthday", description="Set your birthday")
+    @app_commands.describe(
+        day="Day of your birthday (1-31)",
+        month="Month of your birthday (1-12)",
+        timezone="Your timezone (Example: UTC+10, America/New_York)"
+    )
+    async def birthday(
         self,
         interaction: discord.Interaction,
         day: int,
         month: int,
         timezone: str
     ):
-        # Check if command is used in birthday channel
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
                 "This command can only be used in the birthdays channel!",
                 ephemeral=True
             )
             return
-            
+        
         try:
             # Validate timezone
             pytz.timezone(timezone)
@@ -83,7 +87,7 @@ class Birthdays(commands.Cog):
             datetime(2000, month, day)
         except (ValueError, pytz.exceptions.UnknownTimeZoneError):
             await interaction.response.send_message(
-                "Invalid date or timezone! Please check your input.\nTimezone examples: UTC, UTC+10, America/New_York",
+                "Invalid date or timezone! Please check your input.",
                 ephemeral=True
             )
             return
@@ -100,7 +104,7 @@ class Birthdays(commands.Cog):
             ephemeral=True
         )
 
-    @app_commands.command(name="birthday_list", description="List all birthdays")
+    @app_commands.command(name="birthday list", description="List all birthdays")
     async def birthday_list(self, interaction: discord.Interaction):
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
@@ -127,7 +131,7 @@ class Birthdays(commands.Cog):
         for i in range(0, len(sorted_birthdays), items_per_page):
             page_birthdays = sorted_birthdays[i:i + items_per_page]
             
-            description = "Use `/birthday_set` to add your birthday!\n\n"
+            description = "Use `/birthday set` to add your birthday!\n\n"
             for user_id, bday in page_birthdays:
                 user = interaction.guild.get_member(int(user_id))
                 if user:
@@ -159,27 +163,21 @@ class Birthdays(commands.Cog):
                     if user_time.day == data['day'] and user_time.month == data['month']:
                         user = self.bot.get_user(int(user_id))
                         if user and str(user_id) not in self.active_birthday_roles:
-                            # Get first guild the bot is in (assuming single server bot)
                             guild = self.bot.guilds[0]
                             member = guild.get_member(int(user_id))
                             channel = self.bot.get_channel(self.birthday_channel_id)
                             
                             if member and channel:
-                                # Add birthday role
                                 role = guild.get_role(self.birthday_role_id)
                                 await member.add_roles(role)
-                                
-                                # Send birthday message
                                 await channel.send(f"@everyone 🎉 Happy Birthday {user.mention}! 🎂")
-                                
-                                # Track role addition
                                 self.active_birthday_roles[str(user_id)] = current_time.timestamp()
                                 self.save_active_roles()
                 
                 # Check for role removals
                 for user_id, timestamp in list(self.active_birthday_roles.items()):
                     if current_time.timestamp() - timestamp >= 86400:  # 24 hours
-                        guild = self.bot.guilds[0]  # Get first guild
+                        guild = self.bot.guilds[0]
                         member = guild.get_member(int(user_id))
                         role = guild.get_role(self.birthday_role_id)
                         
@@ -193,5 +191,6 @@ class Birthdays(commands.Cog):
                 print(f"Error in birthday check loop: {e}")
             
             await asyncio.sleep(60)  # Check every minute
+
 async def setup(bot):
     await bot.add_cog(Birthdays(bot))
