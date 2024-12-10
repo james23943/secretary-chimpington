@@ -4,6 +4,7 @@ from discord import app_commands
 import json
 from datetime import datetime
 import random
+import asyncio  # Add this line
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -32,7 +33,13 @@ class Levels(commands.Cog):
         self.bot = bot
         self.levels = self.load_levels()
         self.last_online = self.load_last_online()
-        self.bot.loop.create_task(self.periodic_save())  # Add this line
+        self.bot.loop.create_task(self.periodic_save())
+    
+    async def periodic_save(self):
+        await self.bot.wait_until_ready()  # Make sure bot is ready
+        while not self.bot.is_closed():
+            self.save_last_online()
+            await asyncio.sleep(60)  # Save every minute
         
     def load_levels(self):
         try:
@@ -55,7 +62,6 @@ class Levels(commands.Cog):
     def save_last_online(self):
         with open('last_online.json', 'w') as f:
             json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
-
     @commands.Cog.listener()
     async def on_ready(self):
         self.save_last_online()  # Add this line at start
