@@ -3,35 +3,16 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime, timezone  # Add timezoneimport json
-import asyncio
 
 # Load environment variables
 load_dotenv()
 
-import json
-
-def load_last_online():
-    try:
-        with open('last_online.json', 'r') as f:
-            return json.load(f)['timestamp']
-    except FileNotFoundError:
-        return 0
-
-def save_last_online():
-    with open('last_online.json', 'w') as f:
-        json.dump({'timestamp': datetime.now(timezone.utc).timestamp()}, f)
-
-async def periodic_save(bot):
-    while not bot.is_closed():
-        save_last_online()
-        await asyncio.sleep(1)
-
 # Bot setup with intents
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # Add this line
-bot = commands.Bot(command_prefix='/', intents=intents)  # New
+intents.members = True
+bot = commands.Bot(command_prefix='/', intents=intents)
+
 async def load_extensions():
     cogs_path = Path(__file__).parent / 'cogs'
     for filename in os.listdir(cogs_path):
@@ -55,8 +36,23 @@ async def on_ready():
                     except discord.Forbidden:
                         print(f"No permission in: {channel.name}")
 
+    # Check roles on startup
+    required_role_id = 1191291888947437598
+    dependent_role_id = 1311101869275484230
+    for guild in bot.guilds:
+        required_role = guild.get_role(required_role_id)
+        dependent_role = guild.get_role(dependent_role_id)
+        for member in guild.members:
+            if dependent_role in member.roles and required_role not in member.roles:
+                await member.remove_roles(dependent_role)
+                try:
+                    await member.send(f"The role '{dependent_role.name}' requires you to have the '{required_role.name}' role. The role has been removed.")
+                except discord.Forbidden:
+                    pass
+
     # Continue with normal startup
     await load_extensions()
     await bot.tree.sync()
+
 # Run the bot
 bot.run(os.getenv('DISCORD_TOKEN'))
