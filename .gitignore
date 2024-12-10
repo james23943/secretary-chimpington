@@ -180,3 +180,9 @@ levels.json
 mee6_levels.json
 convert_levels.py
 fetch_mee6_data.py
+
+# Ignore all files in the messages folder, including subfolders
+/messages/**
+
+# Do not ignore the subfolder structure (if necessary for placeholders)
+/messages/**/
