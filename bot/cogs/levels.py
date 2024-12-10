@@ -4,7 +4,7 @@ from discord import app_commands
 import json
 from datetime import datetime
 import random
-import asyncio  # Add this line
+import asyncio
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -35,12 +35,6 @@ class Levels(commands.Cog):
         self.last_online = self.load_last_online()
         self.bot.loop.create_task(self.periodic_save())
     
-    async def periodic_save(self):
-        await self.bot.wait_until_ready()  # Make sure bot is ready
-        while not self.bot.is_closed():
-            self.save_last_online()
-            await asyncio.sleep(1)  # Save every second
-        
     def load_levels(self):
         try:
             with open('levels.json', 'r') as f:
@@ -63,9 +57,14 @@ class Levels(commands.Cog):
         with open('last_online.json', 'w') as f:
             json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
 
+    async def periodic_save(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            self.save_last_online()
+            await asyncio.sleep(1)  # Save every second
+
     @commands.Cog.listener()
     async def on_ready(self):
-        self.save_last_online()  # Add this line at start
         # Update messages sent while offline
         for guild in self.bot.guilds:
             for channel in guild.text_channels:
@@ -75,7 +74,7 @@ class Levels(commands.Cog):
                             await self.process_message(message)
                 except discord.Forbidden:
                     continue
-        self.save_last_online()  # Keep this line at end
+        self.save_last_online()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -159,7 +158,7 @@ class Levels(commands.Cog):
                 description=description,
                 color=discord.Color.blue()
             )
-            embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(current_members)}")  # Changed from len(self.levels) to len(current_members)
+            embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(current_members)}")
             pages.append(embed)
         
         await interaction.response.send_message(
