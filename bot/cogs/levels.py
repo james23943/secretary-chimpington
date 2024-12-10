@@ -29,6 +29,17 @@ class LevelPageView(discord.ui.View):
             await interaction.response.defer()
 
 class Levels(commands.Cog):
+    def load_levels(self):
+        try:
+            with open('levels.json', 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+            
+    def save_levels(self):
+        with open('levels.json', 'w') as f:
+            json.dump(self.levels, f, indent=4)
+
     def __init__(self, bot):
         self.bot = bot
         self.levels = self.load_levels()
@@ -39,16 +50,7 @@ class Levels(commands.Cog):
         await self.bot.wait_until_ready()  # Make sure bot is ready
         while not self.bot.is_closed():
             self.save_last_online()
-            await asyncio.sleep(1)  # Save every second    def load_levels(self):
-        try:
-            with open('levels.json', 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
-            
-    def save_levels(self):
-        with open('levels.json', 'w') as f:
-            json.dump(self.levels, f, indent=4)
+            await asyncio.sleep(1)  # Save every second
             
     def load_last_online(self):
         try:
