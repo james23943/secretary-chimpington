@@ -143,8 +143,8 @@ class Birthdays(commands.Cog):
                 user = guild.get_member(int(user_id))
                 if user:
                     month_name = datetime(2000, bday['month'], 1).strftime('%B')
-                    description += f"**{month_name} {bday['day']}**: {user.name}\n\n"  # Added extra \n
-            
+                    safe_name = discord.utils.escape_markdown(user.name)
+                    description += f"**{month_name} {bday['day']}**: {safe_name}\n\n"            
             embed = discord.Embed(
                 title="Birthday List 🎂",
                 description=description,
