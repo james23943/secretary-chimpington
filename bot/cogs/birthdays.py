@@ -119,13 +119,19 @@ class Birthdays(commands.Cog):
                 ephemeral=True
             )
             return
-        
-        guild = self.bot.get_guild(self.guild_id)
+
+        # Get guild and sort birthdays
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("Could not find server!", ephemeral=True)
+            return
+            
         sorted_birthdays = sorted(
             self.birthdays.items(),
             key=lambda x: (x[1]['month'], x[1]['day'])
         )
         
+        # Create pages
         pages = []
         items_per_page = 30
         
@@ -137,15 +143,6 @@ class Birthdays(commands.Cog):
                 user = guild.get_member(int(user_id))
                 if user:
                     description += f"{bday['month']}/{bday['day']} - {user.name}\n"
-            
-            if description:
-                embed = discord.Embed(
-                    title="Birthday List",
-                    description=description,
-                    color=discord.Color.purple()
-                )
-                embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
-                pages.append(embed)
         
         if pages:
             await interaction.response.send_message(
