@@ -29,17 +29,6 @@ class LevelPageView(discord.ui.View):
             await interaction.response.defer()
 
 class Levels(commands.Cog):
-    def load_levels(self):
-        try:
-            with open('levels.json', 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
-            
-    def save_levels(self):
-        with open('levels.json', 'w') as f:
-            json.dump(self.levels, f, indent=4)
-
     def __init__(self, bot):
         self.bot = bot
         self.levels = self.load_levels()
@@ -51,6 +40,17 @@ class Levels(commands.Cog):
         while not self.bot.is_closed():
             self.save_last_online()
             await asyncio.sleep(1)  # Save every second
+        
+    def load_levels(self):
+        try:
+            with open('levels.json', 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+            
+    def save_levels(self):
+        with open('levels.json', 'w') as f:
+            json.dump(self.levels, f, indent=4)
             
     def load_last_online(self):
         try:
@@ -62,6 +62,7 @@ class Levels(commands.Cog):
     def save_last_online(self):
         with open('last_online.json', 'w') as f:
             json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.save_last_online()  # Add this line at start
@@ -75,6 +76,7 @@ class Levels(commands.Cog):
                 except discord.Forbidden:
                     continue
         self.save_last_online()  # Keep this line at end
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -167,9 +169,3 @@ class Levels(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Levels(bot))
-
-    async def periodic_save(self):
-        import asyncio
-        while not self.bot.is_closed():
-            self.save_last_online()
-            await asyncio.sleep(60)  # Save every minute
