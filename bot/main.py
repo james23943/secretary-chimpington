@@ -21,12 +21,23 @@ async def load_extensions():
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
-    # Clear all existing commands
-    bot.tree.clear_commands(guild=None)
-    # Load new commands
+    
+    # Cleanup category channels
+    category_id = 1219873300977549352
+    for guild in bot.guilds:
+        category = guild.get_channel(category_id)
+        if category and isinstance(category, discord.CategoryChannel):
+            for channel in category.channels:
+                if isinstance(channel, discord.TextChannel):
+                    try:
+                        await channel.purge(limit=None)
+                        print(f"Cleaned channel: {channel.name}")
+                    except discord.Forbidden:
+                        print(f"No permission in: {channel.name}")
+    
+    # Continue with normal startup
     await load_extensions()
-    # Sync changes
-    await bot.tree.sync()  # Sync slash commands
+    await bot.tree.sync()
 
 # Run the bot
 bot.run(os.getenv('DISCORD_TOKEN'))
