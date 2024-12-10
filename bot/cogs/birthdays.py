@@ -34,7 +34,7 @@ class Birthdays(commands.Cog):
         self.birthdays = self.load_birthdays()
         self.birthday_role_id = 1217828559742173246
         self.birthday_channel_id = 1209482944176201738
-        self.guild_id = 913372558693396511
+        self.guild_id = 1176076930647453696
         self.active_birthday_roles = self.load_active_roles()
         self.bot.loop.create_task(self.birthday_check_loop())
     
@@ -120,6 +120,7 @@ class Birthdays(commands.Cog):
             )
             return
         
+        guild = self.bot.get_guild(self.guild_id)
         sorted_birthdays = sorted(
             self.birthdays.items(),
             key=lambda x: (x[1]['month'], x[1]['day'])
@@ -131,53 +132,58 @@ class Birthdays(commands.Cog):
         for i in range(0, len(sorted_birthdays), items_per_page):
             page_birthdays = sorted_birthdays[i:i + items_per_page]
             
-            description = "Use `/birthdayset` to add your birthday!\n\n"
+            description = ""
             for user_id, bday in page_birthdays:
-                guild = self.bot.get_guild(self.guild_id)  # Add this line
-                user = guild.get_member(int(user_id))  # Modified line
+                user = guild.get_member(int(user_id))
                 if user:
-                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"            
-            embed = discord.Embed(
-                title="Birthday List",
-                description=description,
-                color=discord.Color.purple()
-            )
-            embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
-            pages.append(embed)
+                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"
+            
+            if description:
+                embed = discord.Embed(
+                    title="Birthday List",
+                    description=description,
+                    color=discord.Color.purple()
+                )
+                embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
+                pages.append(embed)
         
-        await interaction.response.send_message(
-            embed=pages[0],
-            view=BirthdayPageView(pages)
-        )
+        if pages:
+            await interaction.response.send_message(
+                embed=pages[0],
+                view=BirthdayPageView(pages) if len(pages) > 1 else None
+            )
+        else:
+            await interaction.response.send_message(
+                "No active birthdays found!",
+                ephemeral=True
+            )
 
     async def birthday_check_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             try:
                 current_time = datetime.now(pytz.UTC)
+                guild = self.bot.get_guild(self.guild_id)
                 
                 for user_id, data in self.birthdays.items():
                     user_tz = pytz.timezone(data['timezone'])
                     user_time = current_time.astimezone(user_tz)
                     
                     if user_time.day == data['day'] and user_time.month == data['month']:
-                        user = self.bot.get_user(int(user_id))
-                        if user and str(user_id) not in self.active_birthday_roles:
-                            guild = self.bot.guilds[0]
+                        if str(user_id) not in self.active_birthday_roles:
                             member = guild.get_member(int(user_id))
                             channel = self.bot.get_channel(self.birthday_channel_id)
                             
                             if member and channel:
                                 role = guild.get_role(self.birthday_role_id)
                                 await member.add_roles(role)
-                                await channel.send(f"@everyone 🎉 Happy Birthday {user.mention}! 🎂")
+                                await channel.send(f"@everyone 🎉 Happy Birthday {member.mention}! 🎂")
                                 self.active_birthday_roles[str(user_id)] = current_time.timestamp()
                                 self.save_active_roles()
                 
                 # Check for role removals
                 for user_id, timestamp in list(self.active_birthday_roles.items()):
                     if current_time.timestamp() - timestamp >= 86400:  # 24 hours
-                        guild = self.bot.guilds[0]
                         member = guild.get_member(int(user_id))
                         role = guild.get_role(self.birthday_role_id)
                         
