@@ -34,6 +34,7 @@ class Birthdays(commands.Cog):
         self.birthdays = self.load_birthdays()
         self.birthday_role_id = 1217828559742173246
         self.birthday_channel_id = 1209482944176201738
+        self.guild_id = 913372558693396511
         self.active_birthday_roles = self.load_active_roles()
         self.bot.loop.create_task(self.birthday_check_loop())
     
@@ -132,10 +133,10 @@ class Birthdays(commands.Cog):
             
             description = "Use `/birthdayset` to add your birthday!\n\n"
             for user_id, bday in page_birthdays:
-                user = interaction.guild.get_member(int(user_id))
+                guild = self.bot.get_guild(self.guild_id)  # Add this line
+                user = guild.get_member(int(user_id))  # Modified line
                 if user:
-                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"
-            
+                    description += f"{bday['month']}/{bday['day']} - {user.name}\n"            
             embed = discord.Embed(
                 title="Birthday List",
                 description=description,
