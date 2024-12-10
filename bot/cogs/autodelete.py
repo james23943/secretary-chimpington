@@ -8,11 +8,14 @@ class AutoDelete(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        # Skip DM channels
+        if not isinstance(message.channel, discord.TextChannel):
+            return
+            
         if message.channel.category_id == self.category_id:
             try:
                 await message.delete()
             except discord.NotFound:
                 pass
-
 async def setup(bot):
     await bot.add_cog(AutoDelete(bot))
