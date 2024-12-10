@@ -32,6 +32,7 @@ class Levels(commands.Cog):
         self.bot = bot
         self.levels = self.load_levels()
         self.last_online = self.load_last_online()
+        self.bot.loop.create_task(self.periodic_save())  # Add this line
         
     def load_levels(self):
         try:
@@ -161,3 +162,9 @@ class Levels(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Levels(bot))
+
+    async def periodic_save(self):
+        import asyncio
+        while not self.bot.is_closed():
+            self.save_last_online()
+            await asyncio.sleep(60)  # Save every minute
