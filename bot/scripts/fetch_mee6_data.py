@@ -20,7 +20,13 @@ def fetch_mee6_data():
         if not players:
             break
             
-        all_data.extend(players)
+        # Filter only needed data
+        filtered_players = [{
+            'id': player['id'],
+            'message_count': player['message_count']
+        } for player in players]
+            
+        all_data.extend(filtered_players)
         page += 1
         print(f"Fetched page {page}")
     
