@@ -42,9 +42,6 @@ async def load_extensions():
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     
-    # Start periodic saving
-    bot.loop.create_task(periodic_save(bot))
-    
     # Cleanup category channels
     category_id = 1219873300977549352
     for guild in bot.guilds:
@@ -57,21 +54,7 @@ async def on_ready():
                         print(f"Cleaned channel: {channel.name}")
                     except discord.Forbidden:
                         print(f"No permission in: {channel.name}")
-    
-    # Update messages sent while offline
-    last_online = load_last_online()
-    for guild in bot.guilds:
-        for channel in guild.text_channels:
-            try:
-                async for message in channel.history(after=datetime.fromtimestamp(last_online)):
-                    if not message.author.bot:
-                        # Get levels cog and process message
-                        levels_cog = bot.get_cog('Levels')
-                        if levels_cog:
-                            await levels_cog.process_message(message)
-            except discord.Forbidden:
-                continue
-    
+
     # Continue with normal startup
     await load_extensions()
     await bot.tree.sync()
