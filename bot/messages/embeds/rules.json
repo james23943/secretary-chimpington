@@ -1,0 +1,39 @@
+{
+    "embeds": [
+        {
+            "title": "Server Rules 📜",
+            "description": "Please read and follow these guidelines to maintain a positive community.",
+            "color": 3447003,
+            "fields": [
+                {
+                    "name": "Purpose",
+                    "value": "• This is a friends-focused server—not a dating app\n• Please respect the purpose of this space",
+                    "inline": false
+                },
+                {
+                    "name": "Channel Usage",
+                    "value": "• Use channels for their intended purposes\n• Keep the server organized and enjoyable for everyone",
+                    "inline": false
+                },
+                {
+                    "name": "Roles & Leadership",
+                    "value": "• Do not ask for admin, moderator, or monitor roles\n• Leadership roles are earned or appointed organically\n• Ensure your self-roles are correctly set",
+                    "inline": false
+                },
+                {
+                    "name": "Community Conduct",
+                    "value": "• Avoid creating division within the community\n• Address dramas openly and constructively\n• Be mindful of others' wellbeing\n• Respect stated boundaries, including age and DM preferences",
+                    "inline": false
+                },
+                {
+                    "name": "Invitations",
+                    "value": "• Be cautious about inviting others\n• Consider the impact of potential \"walking red flags\" on the server",
+                    "inline": false
+                }
+            ],
+            "footer": {
+                "text": "Updated rules as of 2024"
+            }
+        }
+    ]
+}
