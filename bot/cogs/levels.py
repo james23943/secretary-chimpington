@@ -4,7 +4,6 @@ from discord import app_commands
 import json
 from datetime import datetime
 import random
-import asyncio
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -32,8 +31,6 @@ class Levels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.levels = self.load_levels()
-        self.last_online = self.load_last_online()
-        self.bot.loop.create_task(self.periodic_save())
     
     def load_levels(self):
         try:
@@ -45,46 +42,13 @@ class Levels(commands.Cog):
     def save_levels(self):
         with open('levels.json', 'w') as f:
             json.dump(self.levels, f, indent=4)
-            
-    def load_last_online(self):
-        try:
-            with open('last_online.json', 'r') as f:
-                return json.load(f)['timestamp']
-        except FileNotFoundError:
-            return 0
-            
-    def save_last_online(self):
-        with open('last_online.json', 'w') as f:
-            json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
-
-    async def periodic_save(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            self.save_last_online()
-            await asyncio.sleep(1)  # Save every second
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        # Update messages sent while offline
-        for guild in self.bot.guilds:
-            for channel in guild.text_channels:
-                try:
-                    async for message in channel.history(after=datetime.fromtimestamp(self.last_online)):
-                        if not message.author.bot:
-                            await self.process_message(message)
-                except discord.Forbidden:
-                    continue
-        self.save_last_online()
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
             return
-        await self.process_message(message)
-
-    async def process_message(self, message):
+            
         user_id = str(message.author.id)
-        
         if user_id not in self.levels:
             self.levels[user_id] = {"messages": 0, "level": 0}
             
@@ -93,8 +57,6 @@ class Levels(commands.Cog):
         
         if new_level > self.levels[user_id]["level"]:
             self.levels[user_id]["level"] = new_level
-            
-            # Sarcastic level up messages
             messages = [
                 f"Oh look, {message.author.name} reached level {new_level}. How thrilling. 🎉",
                 f"Against all odds, {message.author.name} made it to level {new_level}. 👏",
