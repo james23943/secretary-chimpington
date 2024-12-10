@@ -11,15 +11,10 @@ class MessageSender(commands.Cog):
         self.base_path = Path(__file__).parent.parent / 'messages'
 
     @app_commands.command(name="messagesend", description="Send a predefined message")
-    @app_commands.describe(
-        type="Message type (folder name)",
-        filename="Name of the message file"
-    )
     async def message_send(self, interaction: discord.Interaction, type: str, filename: str):
-        if interaction.user.id != self.owner_id:
+        if interaction.user.id != self.owner_id:  # owner_id is set to 238959894168862721 in __init__
             await interaction.response.send_message("Not authorized.", ephemeral=True)
             return
-
         try:
             file_path = self.base_path / type / f"{filename}.json"
             with open(file_path, 'r') as f:
