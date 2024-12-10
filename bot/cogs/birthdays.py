@@ -143,14 +143,17 @@ class Birthdays(commands.Cog):
                 user = guild.get_member(int(user_id))
                 if user:
                     month_name = datetime(2000, bday['month'], 1).strftime('%B')
-                    description += f"**{month_name} {bday['day']}**: {user.name}\n"            
+                    description += f"**{month_name} {bday['day']}**: {user.name}\n\n"  # Added extra \n
+            
             embed = discord.Embed(
                 title="Birthday List 🎂",
                 description=description,
                 color=discord.Color.purple()
             )
-            embed.set_footer(text=f"🎉 Total Birthdays: {len(self.birthdays)}")
-            pages.append(embed)        
+            # Updated footer with page info
+            embed.set_footer(text=f"🎉 Page {i//items_per_page + 1}/{len(range(0, len(sorted_birthdays), items_per_page))} • Showing {len(page_birthdays)} birthdays • Total: {len(self.birthdays)}")
+            pages.append(embed)
+        
         if description.strip() != "Use `/birthdayset` to add your birthday!":  # Check if we have birthdays listed
             await interaction.response.send_message(
                 embed=pages[0],
