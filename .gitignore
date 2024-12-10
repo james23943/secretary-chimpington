@@ -166,3 +166,7 @@ cython_debug/
 
 # code-workspace file is used by Visual Studio Code
 *.code-workspace
+
+# Private birthday data
+birthdays.json
+active_birthday_roles.json
