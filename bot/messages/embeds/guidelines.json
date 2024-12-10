@@ -1,0 +1,34 @@
+{
+    "embeds": [
+        {
+            "title": "Staff Guidelines 📋",
+            "description": "Important guidelines for server staff members.",
+            "color": 15105570,
+            "fields": [
+                {
+                    "name": "Permission Usage",
+                    "value": "• Do not abuse power imbalance for jokes\n• Only use permissions when necessary",
+                    "inline": false
+                },
+                {
+                    "name": "Muting Members",
+                    "value": "• Always use the `/mute` command for proper muting",
+                    "inline": false
+                },
+                {
+                    "name": "Role Management",
+                    "value": "• Do not modify self-assignable roles\n• Do not modify filter roles\n• Do not modify @member role\n• Exception: Age role verification\n• Exception: Removing duplicate roles",
+                    "inline": false
+                },
+                {
+                    "name": "Role Verification",
+                    "value": "• Ensure members don't have multiple DM status roles\n• Ensure members don't have multiple age roles\n• Verify everyone has at least one of each required role",
+                    "inline": false
+                }
+            ],
+            "footer": {
+                "text": "Staff Guidelines 2024"
+            }
+        }
+    ]
+}
