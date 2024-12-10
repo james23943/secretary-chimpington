@@ -8,13 +8,6 @@ class RoleChecker(commands.Cog):
         self.dependent_role_id = 1311101869275484230
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        # Check all members on startup
-        for guild in self.bot.guilds:
-            for member in guild.members:
-                await self.check_roles(member)
-
-    @commands.Cog.listener()
     async def on_member_update(self, before, after):
         # Check when roles change
         if before.roles != after.roles:
