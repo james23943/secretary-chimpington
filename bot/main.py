@@ -3,12 +3,13 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime
-import json
+from datetime import datetime, timezone  # Add timezoneimport json
 import asyncio
 
 # Load environment variables
 load_dotenv()
+
+import json
 
 def load_last_online():
     try:
@@ -19,7 +20,7 @@ def load_last_online():
 
 def save_last_online():
     with open('last_online.json', 'w') as f:
-        json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
+        json.dump({'timestamp': datetime.now(timezone.utc).timestamp()}, f)
 
 async def periodic_save(bot):
     while not bot.is_closed():
