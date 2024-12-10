@@ -3,9 +3,28 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import datetime
+import json
+import asyncio
 
 # Load environment variables
 load_dotenv()
+
+def load_last_online():
+    try:
+        with open('last_online.json', 'r') as f:
+            return json.load(f)['timestamp']
+    except FileNotFoundError:
+        return 0
+
+def save_last_online():
+    with open('last_online.json', 'w') as f:
+        json.dump({'timestamp': datetime.utcnow().timestamp()}, f)
+
+async def periodic_save(bot):
+    while not bot.is_closed():
+        save_last_online()
+        await asyncio.sleep(1)
 
 # Bot setup with intents
 intents = discord.Intents.default()
@@ -22,6 +41,9 @@ async def load_extensions():
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     
+    # Start periodic saving
+    bot.loop.create_task(periodic_save(bot))
+    
     # Cleanup category channels
     category_id = 1219873300977549352
     for guild in bot.guilds:
@@ -35,9 +57,22 @@ async def on_ready():
                     except discord.Forbidden:
                         print(f"No permission in: {channel.name}")
     
+    # Update messages sent while offline
+    last_online = load_last_online()
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            try:
+                async for message in channel.history(after=datetime.fromtimestamp(last_online)):
+                    if not message.author.bot:
+                        # Get levels cog and process message
+                        levels_cog = bot.get_cog('Levels')
+                        if levels_cog:
+                            await levels_cog.process_message(message)
+            except discord.Forbidden:
+                continue
+    
     # Continue with normal startup
     await load_extensions()
     await bot.tree.sync()
-
 # Run the bot
 bot.run(os.getenv('DISCORD_TOKEN'))
