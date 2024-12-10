@@ -39,8 +39,7 @@ class Levels(commands.Cog):
         await self.bot.wait_until_ready()  # Make sure bot is ready
         while not self.bot.is_closed():
             self.save_last_online()
-            await asyncio.sleep(60)  # Save every minute
-        
+            await asyncio.sleep(1)  # Changed from 60 to 1        
     def load_levels(self):
         try:
             with open('levels.json', 'r') as f:
