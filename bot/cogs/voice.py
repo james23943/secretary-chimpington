@@ -36,10 +36,13 @@ class VoiceChannels(commands.Cog):
             new_channel = await member.guild.create_voice_channel(
                 name=f"{member.name}'s Channel",
                 category=after.channel.category,
-                position=after.channel.position + 1,
+                position=after.channel.position + 1,  # This doesn't always work reliably
                 user_limit=10,
                 overwrites=overwrites
             )
+            
+            # Force position update after creation
+            await new_channel.edit(position=after.channel.position + 1)
             
             # Move member to new channel
             await member.move_to(new_channel)
