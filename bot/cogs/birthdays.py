@@ -138,13 +138,21 @@ class Birthdays(commands.Cog):
         for i in range(0, len(sorted_birthdays), items_per_page):
             page_birthdays = sorted_birthdays[i:i + items_per_page]
             
-            description = ""
+            description = "Use `/birthdayset` to add your birthday!\n\n"  # Header message
             for user_id, bday in page_birthdays:
                 user = guild.get_member(int(user_id))
                 if user:
                     description += f"{bday['month']}/{bday['day']} - {user.name}\n"
+            
+            embed = discord.Embed(
+                title="Birthday List",
+                description=description,
+                color=discord.Color.purple()
+            )
+            embed.set_footer(text=f"Total Birthdays: {len(self.birthdays)}")
+            pages.append(embed)
         
-        if pages:
+        if description.strip() != "Use `/birthdayset` to add your birthday!":  # Check if we have birthdays listed
             await interaction.response.send_message(
                 embed=pages[0],
                 view=BirthdayPageView(pages) if len(pages) > 1 else None
@@ -154,7 +162,6 @@ class Birthdays(commands.Cog):
                 "No active birthdays found!",
                 ephemeral=True
             )
-
     async def birthday_check_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
