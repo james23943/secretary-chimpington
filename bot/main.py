@@ -11,7 +11,7 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True  # Add this line
-bot = commands.Bot(command_prefix=None, intents=intents)  # New# Load cogs
+bot = commands.Bot(command_prefix='/', intents=intents)  # New
 async def load_extensions():
     cogs_path = Path(__file__).parent / 'cogs'
     for filename in os.listdir(cogs_path):
