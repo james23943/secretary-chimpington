@@ -59,7 +59,7 @@ class Birthdays(commands.Cog):
         with open('active_birthday_roles.json', 'w') as f:
             json.dump(self.active_birthday_roles, f)
 
-    @app_commands.command(name="birthday-set", description="Set your birthday")
+    @app_commands.command(name="birthdaySet", description="Set your birthday")
     @app_commands.describe(
         day="Day of your birthday (1-31)",
         month="Month of your birthday (1-12)",
@@ -103,7 +103,7 @@ class Birthdays(commands.Cog):
             ephemeral=True
         )
 
-    @app_commands.command(name="birthday-list", description="List all birthdays")
+    @app_commands.command(name="birthdayList", description="List all birthdays")
     async def birthday_list(self, interaction: discord.Interaction):
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
@@ -130,7 +130,7 @@ class Birthdays(commands.Cog):
         for i in range(0, len(sorted_birthdays), items_per_page):
             page_birthdays = sorted_birthdays[i:i + items_per_page]
             
-            description = "Use `/birthday-set` to add your birthday!\n\n"
+            description = "Use `/birthdaySet` to add your birthday!\n\n"
             for user_id, bday in page_birthdays:
                 user = interaction.guild.get_member(int(user_id))
                 if user:
