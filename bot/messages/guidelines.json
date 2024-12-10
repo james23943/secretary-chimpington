@@ -1,34 +1,9 @@
 {
     "embeds": [
         {
-            "title": "Staff Guidelines 📋",
-            "description": "Important guidelines for server staff members.",
-            "color": 15105570,
-            "fields": [
-                {
-                    "name": "Permission Usage",
-                    "value": "• Do not abuse power imbalance for jokes\n• Only use permissions when necessary",
-                    "inline": false
-                },
-                {
-                    "name": "Muting Members",
-                    "value": "• Always use the `/mute` command for proper muting",
-                    "inline": false
-                },
-                {
-                    "name": "Role Management",
-                    "value": "• Do not modify self-assignable roles\n• Do not modify filter roles\n• Do not modify @member role\n• Exception: Age role verification\n• Exception: Removing duplicate roles",
-                    "inline": false
-                },
-                {
-                    "name": "Role Verification",
-                    "value": "• Ensure members don't have multiple DM status roles\n• Ensure members don't have multiple age roles\n• Verify everyone has at least one of each required role",
-                    "inline": false
-                }
-            ],
-            "footer": {
-                "text": "Staff Guidelines 2024"
-            }
+            "title": "Guidelines 📋",
+            "description": "1. Do not use the power imbalance you have with these permissions unless necessary (not for jokes).\n\n2. To properly mute someone use the /mute command.\n\n3. Do not touch anyone's self-assignable roles, filter roles, or @member role (UNLESS you are changing their age roles for verification or removing a duplicate).\n\n4. Make sure people don't have more than one DM status or age role (and make sure everyone has at least one).",
+            "color": 15105570
         }
     ]
 }
