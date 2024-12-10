@@ -39,8 +39,7 @@ class Levels(commands.Cog):
         await self.bot.wait_until_ready()  # Make sure bot is ready
         while not self.bot.is_closed():
             self.save_last_online()
-            await asyncio.sleep(1)  # Changed from 60 to 1        
-    def load_levels(self):
+            await asyncio.sleep(1)  # Save every second    def load_levels(self):
         try:
             with open('levels.json', 'r') as f:
                 return json.load(f)
@@ -74,7 +73,6 @@ class Levels(commands.Cog):
                 except discord.Forbidden:
                     continue
         self.save_last_online()  # Keep this line at end
-
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
