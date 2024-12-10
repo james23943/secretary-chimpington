@@ -116,12 +116,22 @@ class Levels(commands.Cog):
             await interaction.response.send_message("No levels recorded yet!", ephemeral=True)
             return
             
+        # Get guild and sort all levels
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("Could not find server!", ephemeral=True)
+            return
+            
+        # Filter only current members but keep data in self.levels
+        current_members = {str(member.id): self.levels[str(member.id)] 
+                         for member in guild.members 
+                         if str(member.id) in self.levels}
+        
         sorted_levels = sorted(
-            self.levels.items(),
+            current_members.items(),
             key=lambda x: (x[1]['level'], x[1]['messages']),
             reverse=True
-        )
-        
+        )        
         pages = []
         items_per_page = 30
         
