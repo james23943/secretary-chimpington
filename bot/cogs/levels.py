@@ -57,6 +57,7 @@ class Levels(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.save_last_online()  # Add this line at start
         # Update messages sent while offline
         for guild in self.bot.guilds:
             for channel in guild.text_channels:
@@ -66,7 +67,7 @@ class Levels(commands.Cog):
                             await self.process_message(message)
                 except discord.Forbidden:
                     continue
-        self.save_last_online()
+        self.save_last_online()  # Keep this line at end
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -150,7 +151,7 @@ class Levels(commands.Cog):
                 description=description,
                 color=discord.Color.blue()
             )
-            embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(self.levels)}")
+            embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(current_members)}")  # Changed from len(self.levels) to len(current_members)
             pages.append(embed)
         
         await interaction.response.send_message(
