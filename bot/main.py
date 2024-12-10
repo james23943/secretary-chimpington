@@ -10,8 +10,8 @@ load_dotenv()
 # Bot setup with intents
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='/', intents=intents)  # prefix doesn't matter for slash commands
-
+intents.members = True  # Add this line
+bot = commands.Bot(intents=intents)  # New
 # Load cogs
 async def load_extensions():
     cogs_path = Path(__file__).parent / 'cogs'
