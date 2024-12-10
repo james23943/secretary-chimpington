@@ -8,7 +8,9 @@ class AutoDelete(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        print("AutoDelete cog ready, starting cleanup...")
         await self.delete_category_messages()
+        print("Cleanup complete")
 
     @commands.Cog.listener()
     async def on_message(self, message):
