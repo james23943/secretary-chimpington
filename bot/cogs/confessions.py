@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
-from pathlib import Path
 import random
+import time
 
 class ConfessionReplyButton(discord.ui.Button):
     def __init__(self):
@@ -24,6 +24,8 @@ class Confessions(commands.Cog):
         self.bot = bot
         self.confession_count = self.load_count()
         self.confession_channel_id = 1176076931217756180
+        self.user_cooldowns = {}
+        self.cooldown_time = 300  # 5 minutes
     
     def load_count(self):
         try:
@@ -45,6 +47,19 @@ class Confessions(commands.Cog):
         confession: str,
         image: discord.Attachment = None
     ):
+        user_id = str(interaction.user.id)
+        current_time = time.time()
+
+        # Check cooldown
+        if user_id in self.user_cooldowns:
+            remaining = self.cooldown_time - (current_time - self.user_cooldowns[user_id])
+            if remaining > 0:
+                await interaction.response.send_message(
+                    f"Please wait {int(remaining)} seconds before confessing again.",
+                    ephemeral=True
+                )
+                return
+
         if interaction.channel_id != self.confession_channel_id:
             await interaction.response.send_message(
                 "This command can only be used in the confessions channel!",
@@ -55,17 +70,14 @@ class Confessions(commands.Cog):
         self.confession_count += 1
         self.save_count(self.confession_count)
         
-        # Create embed with random color and quoted confession
         embed = discord.Embed(
             title=f"Confession #{self.confession_count}",
             description=f"\"{confession}\"",
             color=int(random.randint(0, 0xFFFFFF))
         )
         
-        # Set footer with red exclamation mark
         embed.set_footer(text="❗ Use /confess to share anonymously!")
         
-        # Add image if provided
         if image:
             embed.set_image(url=image.url)
         
@@ -74,6 +86,9 @@ class Confessions(commands.Cog):
             ephemeral=True
         )
         await interaction.channel.send(embed=embed, view=ConfessionView())
+
+        # Set cooldown after successful confession
+        self.user_cooldowns[user_id] = current_time
 
 async def setup(bot):
     await bot.add_cog(Confessions(bot))

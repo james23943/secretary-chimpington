@@ -4,6 +4,7 @@ from discord import app_commands
 import json
 from datetime import datetime
 import random
+import time
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -31,6 +32,8 @@ class Levels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.levels = self.load_levels()
+        self.level_cooldowns = {}
+        self.command_cooldowns = {}
     
     def load_levels(self):
         try:
@@ -49,6 +52,13 @@ class Levels(commands.Cog):
             return
             
         user_id = str(message.author.id)
+        current_time = time.time()
+
+        # Check cooldown for level up messages
+        if user_id in self.level_cooldowns:
+            if current_time - self.level_cooldowns[user_id] < 60:
+                return
+            
         if user_id not in self.levels:
             self.levels[user_id] = {"messages": 0, "level": 0}
             
@@ -57,6 +67,8 @@ class Levels(commands.Cog):
         
         if new_level > self.levels[user_id]["level"]:
             self.levels[user_id]["level"] = new_level
+            self.level_cooldowns[user_id] = current_time
+            
             messages = [
                 f"Oh look, {message.author.name} reached level {new_level}. How thrilling. 🎉",
                 f"Against all odds, {message.author.name} made it to level {new_level}. 👏",
@@ -70,6 +82,16 @@ class Levels(commands.Cog):
     @app_commands.command(name="levelcheck", description="Check your current level")
     async def level_check(self, interaction: discord.Interaction):
         user_id = str(interaction.user.id)
+        current_time = time.time()
+
+        # Check command cooldown
+        if user_id in self.command_cooldowns:
+            if current_time - self.command_cooldowns[user_id] < 30:
+                await interaction.response.send_message("Please wait before using this command again.", ephemeral=True)
+                return
+
+        self.command_cooldowns[user_id] = current_time
+        
         if user_id not in self.levels:
             await interaction.response.send_message("You haven't sent any messages yet!", ephemeral=True)
             return
@@ -82,17 +104,25 @@ class Levels(commands.Cog):
 
     @app_commands.command(name="levelleaderboard", description="View the level leaderboard")
     async def level_leaderboard(self, interaction: discord.Interaction):
+        current_time = time.time()
+
+        # Check command cooldown
+        if 'leaderboard' in self.command_cooldowns:
+            if current_time - self.command_cooldowns['leaderboard'] < 30:
+                await interaction.response.send_message("Please wait before using this command again.", ephemeral=True)
+                return
+
+        self.command_cooldowns['leaderboard'] = current_time
+
         if not self.levels:
             await interaction.response.send_message("No levels recorded yet!", ephemeral=True)
             return
             
-        # Get guild and sort all levels
         guild = interaction.guild
         if not guild:
             await interaction.response.send_message("Could not find server!", ephemeral=True)
             return
             
-        # Filter only current members but keep data in self.levels
         current_members = {str(member.id): self.levels[str(member.id)] 
                          for member in guild.members 
                          if str(member.id) in self.levels}
