@@ -184,6 +184,11 @@ class Birthdays(commands.Cog):
                 current_time = datetime.now(pytz.UTC)
                 guild = self.bot.get_guild(self.guild_id)
                 
+                if guild is None:
+                    print(f"Guild with ID {self.guild_id} not found.")
+                    await asyncio.sleep(60)
+                    continue
+
                 for user_id, data in self.birthdays.items():
                     user_tz = pytz.timezone(data['timezone'])
                     user_time = current_time.astimezone(user_tz)
