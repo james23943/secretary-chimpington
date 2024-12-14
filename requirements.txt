@@ -3,3 +3,6 @@ python-dotenv
 emoji
 pytz
 requests
+youtube-dl
+FFmpeg
+discord.py[voice]
