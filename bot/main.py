@@ -21,7 +21,7 @@ async def load_extensions():
         if filename.endswith('.py'):
             try:
                 await bot.load_extension(f'cogs.{filename[:-3]}')
-                await asyncio.sleep(2)  # Increased delay between extensions
+                await asyncio.sleep(2)  # Delay to prevent rate limits
             except Exception as e:
                 print(f'Failed to load extension {filename}: {e}')
 
@@ -72,7 +72,11 @@ async def on_ready():
         # Load and sync commands
         await load_extensions()
         await asyncio.sleep(2)
-        await bot.tree.sync()
+        try:
+            await bot.tree.sync()
+            print("Slash commands synced successfully.")
+        except Exception as e:
+            print(f"Failed to sync slash commands: {e}")
 
     # Run startup tasks with retry mechanism
     retries = 0
