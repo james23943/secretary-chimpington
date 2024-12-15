@@ -43,11 +43,14 @@ class VoiceChannels(commands.Cog):
             }
             
             try:
-                # Create new channel
+                # Get the category of the create channel
+                category = after.channel.category
+
+                # Create new channel under the same category
                 new_channel = await member.guild.create_voice_channel(
                     name=f"{member.name}'s Channel",
-                    category=after.channel.category,
-                    position=after.channel.position + 1,
+                    category=category,  # Set the category to the same as the create channel
+                    position=after.channel.position + 1,  # Position directly under the create channel
                     user_limit=10,
                     overwrites=overwrites
                 )
