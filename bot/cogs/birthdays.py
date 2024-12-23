@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import pytz
 import asyncio
+from pathlib import Path
 
 class BirthdayPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -29,35 +30,37 @@ class BirthdayPageView(discord.ui.View):
             await interaction.response.defer()
 
 class Birthdays(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
+        self.birthdays_path = Path(__file__).parent.parent / 'data' / 'birthdays.json'
+        self.active_roles_path = Path(__file__).parent.parent / 'data' / 'active_birthday_roles.json'
         self.birthdays = self.load_birthdays()
-        self.birthday_role_id = 1217828559742173246
-        self.birthday_channel_id = 1209482944176201738
-        self.guild_id = 913372558693396511
+        self.birthday_role_id = config['birthday_role_id']
+        self.birthday_channel_id = config['birthday_channel_id']
+        self.guild_id = config['guild_id']
         self.active_birthday_roles = self.load_active_roles()
         self.bot.loop.create_task(self.birthday_check_loop())
     
     def load_birthdays(self):
         try:
-            with open('birthdays.json', 'r') as f:
+            with open(self.birthdays_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
     
     def save_birthdays(self):
-        with open('birthdays.json', 'w') as f:
+        with open(self.birthdays_path, 'w') as f:
             json.dump(self.birthdays, f)
     
     def load_active_roles(self):
         try:
-            with open('active_birthday_roles.json', 'r') as f:
+            with open(self.active_roles_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
     
     def save_active_roles(self):
-        with open('active_birthday_roles.json', 'w') as f:
+        with open(self.active_roles_path, 'w') as f:
             json.dump(self.active_birthday_roles, f)
 
     @app_commands.command(name="birthdayset", description="Set your birthday")
@@ -81,9 +84,7 @@ class Birthdays(commands.Cog):
             return
             
         try:
-            # Validate timezone
             pytz.timezone(timezone)
-            # Validate date
             datetime(2000, month, day)
         except (ValueError, pytz.exceptions.UnknownTimeZoneError):
             await interaction.response.send_message(
@@ -120,7 +121,6 @@ class Birthdays(commands.Cog):
             )
             return
 
-        # Get guild and sort birthdays
         guild = interaction.guild
         if not guild:
             await interaction.response.send_message("Could not find server!", ephemeral=True)
@@ -131,7 +131,6 @@ class Birthdays(commands.Cog):
             key=lambda x: (x[1]['month'], x[1]['day'])
         )
         
-        # Create pages
         pages = []
         items_per_page = 30
         
@@ -150,11 +149,10 @@ class Birthdays(commands.Cog):
                 description=description,
                 color=discord.Color.purple()
             )
-            # Updated footer with page info
             embed.set_footer(text=f"🎉 Page {i//items_per_page + 1}/{len(range(0, len(sorted_birthdays), items_per_page))} • Showing {len(page_birthdays)} birthdays • Total: {len(self.birthdays)}")
             pages.append(embed)
         
-        if description.strip() != "Use `/birthdayset` to add your birthday!":  # Check if we have birthdays listed
+        if description.strip() != "Use `/birthdayset` to add your birthday!":
             await interaction.response.send_message(
                 embed=pages[0],
                 view=BirthdayPageView(pages) if len(pages) > 1 else None
@@ -164,6 +162,7 @@ class Birthdays(commands.Cog):
                 "No active birthdays found!",
                 ephemeral=True
             )
+
     async def birthday_check_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
@@ -187,9 +186,8 @@ class Birthdays(commands.Cog):
                                 self.active_birthday_roles[str(user_id)] = current_time.timestamp()
                                 self.save_active_roles()
                 
-                # Check for role removals
                 for user_id, timestamp in list(self.active_birthday_roles.items()):
-                    if current_time.timestamp() - timestamp >= 86400:  # 24 hours
+                    if current_time.timestamp() - timestamp >= 86400:
                         member = guild.get_member(int(user_id))
                         role = guild.get_role(self.birthday_role_id)
                         
@@ -202,7 +200,8 @@ class Birthdays(commands.Cog):
             except Exception as e:
                 print(f"Error in birthday check loop: {e}")
             
-            await asyncio.sleep(60)  # Check every minute
+            await asyncio.sleep(60)
 
 async def setup(bot):
-    await bot.add_cog(Birthdays(bot))
+    config = bot.config  # Assuming the config is stored in the bot instance
+    await bot.add_cog(Birthdays(bot, config))

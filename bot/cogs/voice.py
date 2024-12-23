@@ -1,24 +1,26 @@
 import discord
 from discord.ext import commands
 import json
+from pathlib import Path
 
 class VoiceChannels(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
-        self.create_channel_id = 1187566046299832360
-        self.blocked_role_id = 913372558693396511
-        self.default_role_id = 1175949398564417627
+        self.create_channel_id = config['create_channel_id']
+        self.blocked_role_id = config['blocked_role_id']
+        self.default_role_id = config['default_role_id']
+        self.temp_channels_path = Path(__file__).parent.parent / 'data' / 'temp_channels.json'
         self.temp_channels = self.load_channels()
         
     def load_channels(self):
         try:
-            with open('temp_channels.json', 'r') as f:
+            with open(self.temp_channels_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
             
     def save_channels(self):
-        with open('temp_channels.json', 'w') as f:
+        with open(self.temp_channels_path, 'w') as f:
             json.dump(self.temp_channels, f)
 
     @commands.Cog.listener()
@@ -73,4 +75,5 @@ class VoiceChannels(commands.Cog):
             self.save_channels()
 
 async def setup(bot):
-    await bot.add_cog(VoiceChannels(bot))
+    config = bot.config  # Assuming the config is stored in the bot instance
+    await bot.add_cog(VoiceChannels(bot, config))

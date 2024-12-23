@@ -20,14 +20,15 @@ class ConfessionView(discord.ui.View):
         self.add_item(ConfessionReplyButton())
 
 class Confessions(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
+        self.confession_channel_id = config['confession_channel_id']
+        self.confession_count_path = Path(__file__).parent.parent / 'data' / 'confession_count.json'
         self.confession_count = self.load_count()
-        self.confession_channel_id = 1176076931217756180
     
     def load_count(self):
         try:
-            with open('confession_count.json', 'r') as f:
+            with open(self.confession_count_path, 'r') as f:
                 data = json.load(f)
                 return data.get('count', 0)
         except FileNotFoundError:
@@ -35,13 +36,13 @@ class Confessions(commands.Cog):
             return 0
     
     def save_count(self, count):
-        with open('confession_count.json', 'w') as f:
+        with open(self.confession_count_path, 'w') as f:
             json.dump({'count': count}, f)
-    
+
     @app_commands.command(name="confess", description="Submit an anonymous confession")
     async def confess(
-        self, 
-        interaction: discord.Interaction, 
+        self,
+        interaction: discord.Interaction,
         confession: str,
         image: discord.Attachment = None
     ):
@@ -59,7 +60,7 @@ class Confessions(commands.Cog):
         embed = discord.Embed(
             title=f"Confession #{self.confession_count}",
             description=f"\"{confession}\"",
-            color=int(random.randint(0, 0xFFFFFF))
+            color=random.randint(0, 0xFFFFFF)
         )
         
         # Set footer with red exclamation mark
@@ -76,4 +77,5 @@ class Confessions(commands.Cog):
         await interaction.channel.send(embed=embed, view=ConfessionView())
 
 async def setup(bot):
-    await bot.add_cog(Confessions(bot))
+    config = bot.config  # Assuming the config is stored in the bot instance
+    await bot.add_cog(Confessions(bot, config))
