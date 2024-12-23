@@ -29,10 +29,10 @@ class Confessions(commands.Cog):
         try:
             with open('confession_count.json', 'r') as f:
                 data = json.load(f)
-                return data.get('count', 478)
+                return data.get('count', 0)
         except FileNotFoundError:
-            self.save_count(478)
-            return 478
+            self.save_count(0)
+            return 0
     
     def save_count(self, count):
         with open('confession_count.json', 'w') as f:
