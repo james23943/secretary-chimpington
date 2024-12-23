@@ -1,0 +1,14 @@
+{
+    "bot_token": "YOUR_BOT_TOKEN",
+    "required_role_id": 0,
+    "dependent_role_id": 0,
+    "category_id": 0,
+    "confession_channel_id": 0,
+    "birthday_role_id": 0,
+    "birthday_channel_id": 0,
+    "create_channel_id": 0,
+    "blocked_role_id": 0,
+    "default_role_id": 0,
+    "owner_id": 0
+  }
+  

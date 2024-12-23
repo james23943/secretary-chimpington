@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import json
 from datetime import datetime
+from pathlib import Path
 import random
 
 class LevelPageView(discord.ui.View):
@@ -28,19 +29,20 @@ class LevelPageView(discord.ui.View):
             await interaction.response.defer()
 
 class Levels(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
+        self.levels_path = Path(__file__).parent.parent / 'data' / 'levels.json'  # Path to data folder
         self.levels = self.load_levels()
     
     def load_levels(self):
         try:
-            with open('levels.json', 'r') as f:
+            with open(self.levels_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
             
     def save_levels(self):
-        with open('levels.json', 'w') as f:
+        with open(self.levels_path, 'w') as f:
             json.dump(self.levels, f, indent=4)
 
     @commands.Cog.listener()
@@ -86,13 +88,11 @@ class Levels(commands.Cog):
             await interaction.response.send_message("No levels recorded yet!", ephemeral=True)
             return
             
-        # Get guild and sort all levels
         guild = interaction.guild
         if not guild:
             await interaction.response.send_message("Could not find server!", ephemeral=True)
             return
             
-        # Filter only current members but keep data in self.levels
         current_members = {str(member.id): self.levels[str(member.id)] 
                          for member in guild.members 
                          if str(member.id) in self.levels}
@@ -129,4 +129,5 @@ class Levels(commands.Cog):
         )
 
 async def setup(bot):
-    await bot.add_cog(Levels(bot))
+    config = bot.config  # Assuming the config is stored in the bot instance
+    await bot.add_cog(Levels(bot, config))

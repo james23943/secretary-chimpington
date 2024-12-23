@@ -5,10 +5,10 @@ import json
 from pathlib import Path
 
 class MessageSender(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
-        self.owner_id = 238959894168862721
-        self.base_path = Path(__file__).parent.parent / 'messages'
+        self.owner_id = config['owner_id']  # Use config for owner ID
+        self.base_path = Path(__file__).parent / 'messages'  # Updated path to be relative to bot/
 
     @app_commands.command(name="messagesend", description="Send a predefined message")
     async def message_send(self, interaction: discord.Interaction, filename: str):
@@ -34,4 +34,5 @@ class MessageSender(commands.Cog):
             await interaction.response.send_message(f"Error: {str(e)}", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(MessageSender(bot))
+    config = bot.config  # Assuming the config is stored in the bot instance
+    await bot.add_cog(MessageSender(bot, config))
