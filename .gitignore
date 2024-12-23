@@ -161,28 +161,22 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# .vscode folder is used by Visual Studio Code
+# Used by Visual Code Studio
+*.code-workspace
 .vscode/
 
-# code-workspace file is used by Visual Studio Code
-*.code-workspace
-
-# Private birthday data
+# Unnecessary, Bianca's Cult server specific, code will generate anyway
 birthdays.json
 active_birthday_roles.json
-
-# Unnecessary, Bianca's Cult server specific, code will generate anyway
 confession_count.json
 temp_channels.json
+bot/messages/*
+!bot/messages/
 levels.json
 
 # Unnecessary, temporary file for set up
 mee6_levels.json
 bot/scripts
-
-# Specific to the server
-bot/messages/*
-!bot/messages/
 
 # Keep this fucking thing
 !bot/messages/.gitkeep
