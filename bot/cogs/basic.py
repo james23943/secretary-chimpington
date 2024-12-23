@@ -10,9 +10,5 @@ class Basic(commands.Cog):
     async def ping(self, interaction: discord.Interaction):
         await interaction.response.send_message(f'Pong! Latency: {round(self.bot.latency * 1000)}ms')
 
-    @commands.command(name='testcommand', help='Test if command registration is working')
-    async def test_command(self, ctx):
-        await ctx.send('Command registration is working!')
-
 async def setup(bot):
     await bot.add_cog(Basic(bot))
