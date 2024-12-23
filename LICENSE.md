@@ -22,5 +22,5 @@ THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPL
 
 ## Contact
 
-For permissions beyond the scope of this license, please us as [secretarychimpington.smock457@passmail.net](mailto:secretarychimpington.smock457@passmail.net).
+For permissions beyond the scope of this license, please me as [secretarychimpington.smock457@passmail.net](mailto:secretarychimpington.smock457@passmail.net).
 
