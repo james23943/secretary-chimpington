@@ -178,11 +178,9 @@ levels.json
 
 # Unnecessary, temporary file for set up
 mee6_levels.json
-convert_levels.py
-bot\scripts\fetch_mee6_data.py
+/bot/scripts
+/bot/scripts
 
-# Ignore all files in the messages folder, including subfolders
-/messages/**
-
-# Do not ignore the subfolder structure (if necessary for placeholders)
-/messages/**/
+# Specific to the server
+/bot/messages/**
+/bot/messages/**/
