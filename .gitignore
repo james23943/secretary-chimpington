@@ -178,9 +178,8 @@ levels.json
 
 # Unnecessary, temporary file for set up
 mee6_levels.json
-/bot/scripts
-/bot/scripts
+bot/scripts
 
 # Specific to the server
-/bot/messages/**
-/bot/messages/**/
+bot/messages/*
+!bot/messages/
