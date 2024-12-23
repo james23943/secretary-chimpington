@@ -183,3 +183,6 @@ bot/scripts
 # Specific to the server
 bot/messages/*
 !bot/messages/
+
+# Keep this fucking thing
+!bot/messages/.gitkeep
