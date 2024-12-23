@@ -6,7 +6,7 @@ I currently support the following versions with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 14.x   | :white_check_mark: |
+| x.x.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
