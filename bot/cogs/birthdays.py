@@ -34,7 +34,7 @@ class Birthdays(commands.Cog):
         self.birthdays = self.load_birthdays()
         self.birthday_role_id = 1217828559742173246
         self.birthday_channel_id = 1209482944176201738
-        self.guild_id = 1176076930647453696
+        self.guild_id = 913372558693396511
         self.active_birthday_roles = self.load_active_roles()
         self.bot.loop.create_task(self.birthday_check_loop())
     
