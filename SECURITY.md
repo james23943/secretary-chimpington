@@ -14,7 +14,7 @@ If you discover a security vulnerability in this project, please follow the step
 
 1. **Do not open a public issue.** Instead, report the vulnerability privately to prevent potential exploitation.
 
-2. **Contact us via email** at [security@example.com](secretarychimpington.smock457@passmail.net). Please include the following details in your report:
+2. **Contact us via email** at [secretarychimpington.smock457@passmail.net](mailto:secretarychimpington.smock457@passmail.net). Please include the following details in your report:
    - A description of the vulnerability.
    - Steps to reproduce the issue.
    - Any potential impact or exploit scenarios.
