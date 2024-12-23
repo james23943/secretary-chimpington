@@ -1,9 +1,0 @@
-{
-    "embeds": [
-        {
-            "title": "Guidelines 📋",
-            "description": "1. Do not use the power imbalance you have with these permissions unless necessary (not for jokes).\n\n2. To properly mute someone use the /mute command.\n\n3. Do not touch anyone's self-assignable roles, filter roles, or @member role (UNLESS you are changing their age roles for verification or removing a duplicate).\n\n4. Make sure people don't have more than one DM status or age role (and make sure everyone has at least one).",
-            "color": 15105570
-        }
-    ]
-}
