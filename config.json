@@ -9,6 +9,7 @@
     "create_channel_id": 0,
     "blocked_role_id": 0,
     "default_role_id": 0,
+    "guild_id": 0,
     "owner_id": 0
   }
   

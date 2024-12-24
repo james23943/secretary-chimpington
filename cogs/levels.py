@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import random
 import asyncio
-from typing import Dict, Optional
+from typing import Dict
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -31,7 +31,7 @@ class LevelPageView(discord.ui.View):
             await interaction.response.defer()
 
 class Levels(commands.Cog):
-    def __init__(self, bot, config):
+    def __init__(self, bot):
         self.bot = bot
         self.levels_path = Path(__file__).parent.parent / 'data' / 'levels.json'
         self.levels = self.load_levels()
@@ -39,7 +39,7 @@ class Levels(commands.Cog):
         self.command_cooldowns: Dict[int, float] = {}
         self.MESSAGE_COOLDOWN = 1.0
         self.COMMAND_COOLDOWN = 5.0
-        
+
     def load_levels(self):
         try:
             with open(self.levels_path, 'r') as f:
@@ -48,6 +48,7 @@ class Levels(commands.Cog):
             return {}
             
     def save_levels(self):
+        self.levels_path.parent.mkdir(exist_ok=True)
         with open(self.levels_path, 'w') as f:
             json.dump(self.levels, f, indent=4)
 
@@ -84,7 +85,7 @@ class Levels(commands.Cog):
             except discord.HTTPException:
                 await asyncio.sleep(1)
             
-        await asyncio.sleep(0.1)  # Small delay between saves
+        await asyncio.sleep(0.1)
         self.save_levels()
 
     @app_commands.command(name="levelcheck", description="Check your current level")
@@ -115,65 +116,68 @@ class Levels(commands.Cog):
 
     @app_commands.command(name="levelleaderboard", description="View the level leaderboard")
     async def level_leaderboard(self, interaction: discord.Interaction):
-        current_time = discord.utils.utcnow().timestamp()
-        user_id = str(interaction.user.id)
-        
-        if user_id in self.command_cooldowns:
-            remaining = self.COMMAND_COOLDOWN - (current_time - self.command_cooldowns[user_id])
-            if remaining > 0:
-                await interaction.response.send_message(
-                    f"Command available in {remaining:.1f} seconds.",
-                    ephemeral=True
-                )
+        try:
+            guild = interaction.guild
+            if not guild:
                 return
                 
-        self.command_cooldowns[user_id] = current_time
-        
-        if not self.levels:
-            await interaction.response.send_message("No levels recorded yet!", ephemeral=True)
-            return
+            # Force member chunk request to ensure we have all members
+            if not guild.chunked:
+                await guild.chunk()
             
-        guild = interaction.guild
-        if not guild:
-            await interaction.response.send_message("Could not find server!", ephemeral=True)
-            return
+            current_members = {str(member.id): self.levels[str(member.id)]
+                           for member in guild.members
+                           if str(member.id) in self.levels}
             
-        current_members = {str(member.id): self.levels[str(member.id)] 
-                         for member in guild.members 
-                         if str(member.id) in self.levels}
-        
-        sorted_levels = sorted(
-            current_members.items(),
-            key=lambda x: (x[1]['level'], x[1]['messages']),
-            reverse=True
-        )
-        
-        pages = []
-        items_per_page = 30
-        
-        for i in range(0, len(sorted_levels), items_per_page):
-            page_users = sorted_levels[i:i + items_per_page]
-            
-            description = "Send messages to gain levels!\n\n"
-            for user_id, data in page_users:
-                user = interaction.guild.get_member(int(user_id))
-                if user:
-                    safe_name = discord.utils.escape_markdown(user.name)
-                    description += f"**Level {data['level']}**: {safe_name} ({data['messages']} messages)\n\n"
-            
-            embed = discord.Embed(
-                title="Level Leaderboard 📊",
-                description=description,
-                color=discord.Color.blue()
+            if not current_members:
+                await interaction.response.send_message("No active members with levels found!", ephemeral=True)
+                return
+                
+            sorted_levels = sorted(
+                current_members.items(),
+                key=lambda x: (x[1]['level'], x[1]['messages']),
+                reverse=True
             )
-            embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(current_members)}")
-            pages.append(embed)
-        
-        await interaction.response.send_message(
-            embed=pages[0],
-            view=LevelPageView(pages) if len(pages) > 1 else None
-        )
+            
+            pages = []
+            items_per_page = 30
+            
+            for i in range(0, len(sorted_levels), items_per_page):
+                page_users = sorted_levels[i:i + items_per_page]
+                
+                description = "Send messages to gain levels!\n\n"
+                for user_id, data in page_users:
+                    user = interaction.guild.get_member(int(user_id))
+                    if user:
+                        safe_name = discord.utils.escape_markdown(user.name)
+                        description += f"**Level {data['level']}**: {safe_name} ({data['messages']} messages)\n\n"
+                
+                embed = discord.Embed(
+                    title="Level Leaderboard 📊",
+                    description=description,
+                    color=discord.Color.blue()
+                )
+                embed.set_footer(text=f"📈 Page {i//items_per_page + 1}/{len(range(0, len(sorted_levels), items_per_page))} • Showing {len(page_users)} users • Total: {len(current_members)}")
+                pages.append(embed)
+            
+            if not pages:
+                await interaction.response.send_message("No data to display!", ephemeral=True)
+                return
+                
+            try:
+                await interaction.response.send_message(
+                    embed=pages[0],
+                    view=LevelPageView(pages) if len(pages) > 1 else None
+                )
+            except discord.HTTPException:
+                await asyncio.sleep(1)
+                await interaction.response.send_message(
+                    embed=pages[0],
+                    view=LevelPageView(pages) if len(pages) > 1 else None
+                )
+        except Exception as e:
+            print(f"Error in levelleaderboard: {e}")
+            await interaction.response.send_message("An error occurred while generating the leaderboard.", ephemeral=True)
 
 async def setup(bot):
-    config = bot.config
-    await bot.add_cog(Levels(bot, config))
+    await bot.add_cog(Levels(bot))

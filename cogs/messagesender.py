@@ -10,11 +10,14 @@ class MessageSender(commands.Cog):
     def __init__(self, bot, config):
         self.bot = bot
         self.owner_id = config['owner_id']
-        self.base_path = Path(__file__).parent.parent / 'data' / 'messages'
+        self.base_path = Path(__file__).parent.parent / 'messages'
         self.cooldowns: Dict[int, float] = {}
         self.COOLDOWN_DURATION = 5.0  # Seconds between message sends
 
     @app_commands.command(name="messagesend", description="Send a predefined message")
+    @app_commands.describe(
+        filename="The name of the JSON file containing the message to send (without .json extension)"
+    )
     async def message_send(self, interaction: discord.Interaction, filename: str):
         current_time = discord.utils.utcnow().timestamp()
         

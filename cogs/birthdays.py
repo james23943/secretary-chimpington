@@ -42,9 +42,9 @@ class Birthdays(commands.Cog):
         self.active_birthday_roles = self.load_active_roles()
         self.command_cooldowns: Dict[int, float] = {}
         self.COMMAND_COOLDOWN = 5.0
-        self.bot.loop.create_task(self.birthday_check_loop())
-    
+        self.bot.loop.create_task(self.birthday_check_loop())    
     def load_birthdays(self):
+        self.birthdays_path.parent.mkdir(exist_ok=True)
         try:
             with open(self.birthdays_path, 'r') as f:
                 return json.load(f)
@@ -53,9 +53,10 @@ class Birthdays(commands.Cog):
     
     def save_birthdays(self):
         with open(self.birthdays_path, 'w') as f:
-            json.dump(self.birthdays, f)
+            json.dump(self.birthdays, f, indent=4)
     
     def load_active_roles(self):
+        self.active_roles_path.parent.mkdir(exist_ok=True)
         try:
             with open(self.active_roles_path, 'r') as f:
                 return json.load(f)
@@ -64,30 +65,30 @@ class Birthdays(commands.Cog):
     
     def save_active_roles(self):
         with open(self.active_roles_path, 'w') as f:
-            json.dump(self.active_birthday_roles, f)
+            json.dump(self.active_birthday_roles, f, indent=4)
 
-    @app_commands.command(name="birthday", description="Set or list birthdays")
-    @app_commands.choices(action=[
-        app_commands.Choice(name="set", value="set"),
-        app_commands.Choice(name="list", value="list")
-    ])
-    async def birthday(
-        self, 
-        interaction: discord.Interaction, 
-        action: str,
-        day: int = None,
-        month: int = None,
-        timezone: str = None
+    @app_commands.command(name="birthdayset", description="Set your birthday")
+    @app_commands.describe(
+        day="Day of your birthday (1-31)",
+        month="Month of your birthday (1-12)",
+        timezone="Your timezone (Example: UTC+10, America/New_York)"
+    )
+    async def birthdayset(
+        self,
+        interaction: discord.Interaction,
+        day: int,
+        month: int,
+        timezone: str
     ):
-        current_time = discord.utils.utcnow().timestamp()
-        user_id = interaction.user.id
-
         if interaction.channel_id != self.birthday_channel_id:
             await interaction.response.send_message(
                 "This command can only be used in the birthdays channel!",
                 ephemeral=True
             )
             return
+
+        current_time = discord.utils.utcnow().timestamp()
+        user_id = str(interaction.user.id)
 
         if user_id in self.command_cooldowns:
             remaining = self.COMMAND_COOLDOWN - (current_time - self.command_cooldowns[user_id])
@@ -100,41 +101,60 @@ class Birthdays(commands.Cog):
 
         self.command_cooldowns[user_id] = current_time
 
-        if action == "set":
-            if not all([day, month, timezone]):
-                await interaction.response.send_message(
-                    "Please provide day, month, and timezone.",
-                    ephemeral=True
-                )
-                return
-                
-            try:
-                pytz.timezone(timezone)
-                datetime(2000, month, day)
-            except (ValueError, pytz.exceptions.UnknownTimeZoneError):
-                await interaction.response.send_message(
-                    "Invalid date or timezone! Please check your input.",
-                    ephemeral=True
-                )
-                return
-            
-            self.birthdays[str(interaction.user.id)] = {
-                "day": day,
-                "month": month,
-                "timezone": timezone
-            }
-            self.save_birthdays()
-            
+        try:
+            pytz.timezone(timezone)
+            datetime(2000, month, day)
+        except (ValueError, pytz.exceptions.UnknownTimeZoneError):
             await interaction.response.send_message(
-                f"Birthday set to {month}/{day} ({timezone})!",
+                "Invalid date or timezone! Please check your input.",
                 ephemeral=True
             )
-            
-        elif action == "list":
-            await self.send_birthday_list(interaction)
+            return
 
-    async def send_birthday_list(self, interaction: discord.Interaction):
-        if not self.birthdays:
+        self.birthdays[user_id] = {
+            "day": day,
+            "month": month,
+            "timezone": timezone
+        }
+        self.save_birthdays()
+
+        await interaction.response.send_message(
+            f"Birthday set to {month}/{day} ({timezone})!",
+            ephemeral=True
+        )
+
+    @app_commands.command(name="birthdaylist", description="Display all birthdays")
+    async def birthdaylist(self, interaction: discord.Interaction):
+        if interaction.channel_id != self.birthday_channel_id:
+            await interaction.response.send_message(
+                "This command can only be used in the birthdays channel!",
+                ephemeral=True
+            )
+            return
+
+        current_time = discord.utils.utcnow().timestamp()
+        user_id = str(interaction.user.id)
+
+        if user_id in self.command_cooldowns:
+            remaining = self.COMMAND_COOLDOWN - (current_time - self.command_cooldowns[user_id])
+            if remaining > 0:
+                await interaction.response.send_message(
+                    f"Command available in {remaining:.1f} seconds.",
+                    ephemeral=True
+                )
+                return
+
+        self.command_cooldowns[user_id] = current_time
+
+        guild = interaction.guild
+        if not guild.chunked:
+            await guild.chunk()
+
+        current_members = {str(member.id): self.birthdays[str(member.id)]
+                       for member in guild.members
+                       if str(member.id) in self.birthdays}
+
+        if not current_members:
             await interaction.response.send_message(
                 "No birthdays set yet!",
                 ephemeral=True
@@ -142,32 +162,32 @@ class Birthdays(commands.Cog):
             return
 
         sorted_birthdays = sorted(
-            self.birthdays.items(),
+            current_members.items(),
             key=lambda x: (x[1]['month'], x[1]['day'])
         )
-        
+
         pages = []
         items_per_page = 30
-        
+
         for i in range(0, len(sorted_birthdays), items_per_page):
             page_birthdays = sorted_birthdays[i:i + items_per_page]
             
-            description = "Use `/birthday set` to add your birthday!\n\n"
+            description = "Use `/birthdayset` to add your birthday!\n\n"
             for user_id, bday in page_birthdays:
                 user = interaction.guild.get_member(int(user_id))
                 if user:
                     month_name = datetime(2000, bday['month'], 1).strftime('%B')
                     safe_name = discord.utils.escape_markdown(user.name)
                     description += f"**{month_name} {bday['day']}**: {safe_name}\n\n"
-            
+
             embed = discord.Embed(
                 title="Birthday List 🎂",
                 description=description,
                 color=discord.Color.purple()
             )
-            embed.set_footer(text=f"🎉 Page {i//items_per_page + 1}/{len(range(0, len(sorted_birthdays), items_per_page))} • Showing {len(page_birthdays)} birthdays • Total: {len(self.birthdays)}")
+            embed.set_footer(text=f"🎉 Page {i//items_per_page + 1}/{len(range(0, len(sorted_birthdays), items_per_page))} • Showing {len(page_birthdays)} birthdays • Total: {len(current_members)}")
             pages.append(embed)
-        
+
         if pages:
             await interaction.response.send_message(
                 embed=pages[0],
@@ -181,6 +201,9 @@ class Birthdays(commands.Cog):
                 current_time = datetime.now(pytz.UTC)
                 guild = self.bot.get_guild(self.guild_id)
                 
+                if not guild.chunked:
+                    await guild.chunk()
+
                 for user_id, data in self.birthdays.items():
                     user_tz = pytz.timezone(data['timezone'])
                     user_time = current_time.astimezone(user_tz)
@@ -201,7 +224,7 @@ class Birthdays(commands.Cog):
                                     await asyncio.sleep(1)
                 
                 for user_id, timestamp in list(self.active_birthday_roles.items()):
-                    if current_time.timestamp() - timestamp >= 86400:
+                    if current_time.timestamp() - timestamp >= 86400:  # 24 hours
                         member = guild.get_member(int(user_id))
                         role = guild.get_role(self.birthday_role_id)
                         

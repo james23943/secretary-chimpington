@@ -4,7 +4,6 @@ from discord import app_commands
 import json
 from pathlib import Path
 import random
-import emoji
 from typing import Dict
 import asyncio
 
@@ -33,7 +32,6 @@ class Confessions(commands.Cog):
         self.confession_count_path = Path(__file__).parent.parent / 'data' / 'confession_count.json'
         self.confession_count = self.load_count()
         self.confession_channel_id = config['confession_channel_id']
-        self.emojis = list(emoji.EMOJI_DATA.keys())
         self.cooldowns: Dict[int, float] = {}
         self.COOLDOWN_DURATION = 5.0
     
@@ -51,6 +49,10 @@ class Confessions(commands.Cog):
             json.dump({'count': count}, f)
     
     @app_commands.command(name="confess", description="Submit an anonymous confession")
+    @app_commands.describe(
+        confession="The confession message you want to submit anonymously",
+        image="Optional image attachment to include with your confession"
+    )
     async def confess(
         self, 
         interaction: discord.Interaction, 
@@ -86,8 +88,7 @@ class Confessions(commands.Cog):
             color=discord.Color.random()
         )
         
-        random_emoji = random.choice(self.emojis)
-        embed.set_footer(text=random_emoji)
+        embed.set_footer(text="❗ Use /confess to share anonymously!")
         
         if image:
             embed.set_image(url=image.url)

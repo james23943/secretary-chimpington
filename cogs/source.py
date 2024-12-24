@@ -28,18 +28,22 @@ class Source(commands.Cog):
         self.cooldowns[user_id] = current_time
         
         github_link = "https://github.com/james23943/secretary-chimpington"
-        credits = (
-            "This bot, Secretary Chimpington, is open-source and available on GitHub.\n"
-            f"Source Code: {github_link}\n\n"
-            "Created by James. For more information, refer to the [README](https://github.com/james23943/secretary-chimpington/blob/main/README.md) "
-            "and [LICENSE](https://github.com/james23943/secretary-chimpington/blob/main/LICENSE.md) files."
+        
+        embed = discord.Embed(
+            color=discord.Color.blue()
+        )
+        
+        embed.add_field(
+            name="GitHub Repository",
+            value=f"[Click here to view the source code]({github_link})",
+            inline=False
         )
         
         try:
-            await interaction.response.send_message(credits)
+            await interaction.response.send_message(embed=embed)
         except discord.HTTPException:
-            await asyncio.sleep(1)  # Rate limit backoff
-            await interaction.response.send_message(credits)
+            await asyncio.sleep(1)
+            await interaction.response.send_message(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Source(bot))
