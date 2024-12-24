@@ -5,6 +5,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 import random
+import asyncio
+from typing import Dict, Optional
 
 class LevelPageView(discord.ui.View):
     def __init__(self, pages, timeout=180):
@@ -31,9 +33,13 @@ class LevelPageView(discord.ui.View):
 class Levels(commands.Cog):
     def __init__(self, bot, config):
         self.bot = bot
-        self.levels_path = Path(__file__).parent.parent / 'data' / 'levels.json'  # Path to data folder
+        self.levels_path = Path(__file__).parent.parent / 'data' / 'levels.json'
         self.levels = self.load_levels()
-    
+        self.message_cooldowns: Dict[int, float] = {}
+        self.command_cooldowns: Dict[int, float] = {}
+        self.MESSAGE_COOLDOWN = 1.0
+        self.COMMAND_COOLDOWN = 5.0
+        
     def load_levels(self):
         try:
             with open(self.levels_path, 'r') as f:
@@ -50,7 +56,15 @@ class Levels(commands.Cog):
         if message.author.bot:
             return
             
+        current_time = discord.utils.utcnow().timestamp()
         user_id = str(message.author.id)
+        
+        if user_id in self.message_cooldowns:
+            if current_time - self.message_cooldowns[user_id] < self.MESSAGE_COOLDOWN:
+                return
+                
+        self.message_cooldowns[user_id] = current_time
+            
         if user_id not in self.levels:
             self.levels[user_id] = {"messages": 0, "level": 0}
             
@@ -65,13 +79,30 @@ class Levels(commands.Cog):
                 f"Well well, {message.author.name} somehow got to level {new_level}. 🎈",
                 f"*Slow clap* {message.author.name} reached level {new_level}. 🎊"
             ]
-            await message.channel.send(random.choice(messages))
+            try:
+                await message.channel.send(random.choice(messages))
+            except discord.HTTPException:
+                await asyncio.sleep(1)
             
+        await asyncio.sleep(0.1)  # Small delay between saves
         self.save_levels()
 
     @app_commands.command(name="levelcheck", description="Check your current level")
     async def level_check(self, interaction: discord.Interaction):
+        current_time = discord.utils.utcnow().timestamp()
         user_id = str(interaction.user.id)
+        
+        if user_id in self.command_cooldowns:
+            remaining = self.COMMAND_COOLDOWN - (current_time - self.command_cooldowns[user_id])
+            if remaining > 0:
+                await interaction.response.send_message(
+                    f"Command available in {remaining:.1f} seconds.",
+                    ephemeral=True
+                )
+                return
+                
+        self.command_cooldowns[user_id] = current_time
+        
         if user_id not in self.levels:
             await interaction.response.send_message("You haven't sent any messages yet!", ephemeral=True)
             return
@@ -84,6 +115,20 @@ class Levels(commands.Cog):
 
     @app_commands.command(name="levelleaderboard", description="View the level leaderboard")
     async def level_leaderboard(self, interaction: discord.Interaction):
+        current_time = discord.utils.utcnow().timestamp()
+        user_id = str(interaction.user.id)
+        
+        if user_id in self.command_cooldowns:
+            remaining = self.COMMAND_COOLDOWN - (current_time - self.command_cooldowns[user_id])
+            if remaining > 0:
+                await interaction.response.send_message(
+                    f"Command available in {remaining:.1f} seconds.",
+                    ephemeral=True
+                )
+                return
+                
+        self.command_cooldowns[user_id] = current_time
+        
         if not self.levels:
             await interaction.response.send_message("No levels recorded yet!", ephemeral=True)
             return
@@ -101,7 +146,8 @@ class Levels(commands.Cog):
             current_members.items(),
             key=lambda x: (x[1]['level'], x[1]['messages']),
             reverse=True
-        )        
+        )
+        
         pages = []
         items_per_page = 30
         
@@ -129,5 +175,5 @@ class Levels(commands.Cog):
         )
 
 async def setup(bot):
-    config = bot.config  # Assuming the config is stored in the bot instance
+    config = bot.config
     await bot.add_cog(Levels(bot, config))
