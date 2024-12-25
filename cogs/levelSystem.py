@@ -120,8 +120,7 @@ class Levels(commands.Cog):
             guild = interaction.guild
             if not guild:
                 return
-                
-            # Force member chunk request to ensure we have all members
+
             if not guild.chunked:
                 await guild.chunk()
             

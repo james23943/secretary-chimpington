@@ -9,35 +9,8 @@ class RoleChecker(commands.Cog):
         self.required_role_id = config['required_role_id']
         self.dependent_role_id = config['dependent_role_id']
         self.role_update_cooldown: Dict[int, float] = {}
-        self.COOLDOWN_DURATION = 2.0  # Seconds between role updates
+        self.COOLDOWN_DURATION = 2.0 
         self.processing_members: Set[int] = set()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        await self.check_roles_on_startup()
-
-    async def check_roles_on_startup(self):
-        for guild in self.bot.guilds:
-            required_role = guild.get_role(self.required_role_id)
-            dependent_role = guild.get_role(self.dependent_role_id)
-            
-            for member in guild.members:
-                if member.id in self.processing_members:
-                    continue
-                    
-                self.processing_members.add(member.id)
-                try:
-                    if dependent_role in member.roles and required_role not in member.roles:
-                        await asyncio.sleep(0.5)  # Rate limit prevention
-                        await member.remove_roles(dependent_role)
-                        try:
-                            await member.send(
-                                f"The role '{dependent_role.name}' requires you to have the '{required_role.name}' role. The role has been removed."
-                            )
-                        except discord.Forbidden:
-                            pass
-                finally:
-                    self.processing_members.remove(member.id)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):

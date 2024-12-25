@@ -224,7 +224,7 @@ class Birthdays(commands.Cog):
                                     await asyncio.sleep(1)
                 
                 for user_id, timestamp in list(self.active_birthday_roles.items()):
-                    if current_time.timestamp() - timestamp >= 86400:  # 24 hours
+                    if current_time.timestamp() - timestamp >= 86400:
                         member = guild.get_member(int(user_id))
                         role = guild.get_role(self.birthday_role_id)
                         

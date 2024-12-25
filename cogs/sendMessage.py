@@ -12,7 +12,7 @@ class MessageSender(commands.Cog):
         self.owner_id = config['owner_id']
         self.base_path = Path(__file__).parent.parent / 'messages'
         self.cooldowns: Dict[int, float] = {}
-        self.COOLDOWN_DURATION = 5.0  # Seconds between message sends
+        self.COOLDOWN_DURATION = 5.0
 
     @app_commands.command(name="messagesend", description="Send a predefined message")
     @app_commands.describe(
@@ -25,7 +25,6 @@ class MessageSender(commands.Cog):
             await interaction.response.send_message("Not authorized.", ephemeral=True)
             return
             
-        # Handle cooldown
         if interaction.channel_id in self.cooldowns:
             remaining = self.COOLDOWN_DURATION - (current_time - self.cooldowns[interaction.channel_id])
             if remaining > 0:
@@ -40,13 +39,11 @@ class MessageSender(commands.Cog):
             with open(file_path, 'r') as f:
                 message_data = json.load(f)
             
-            # Convert embed dict to Embed object if exists
             if 'embeds' in message_data:
                 message_data['embeds'] = [discord.Embed.from_dict(e) for e in message_data['embeds']]
 
-            # Rate limit safe sending
             await interaction.response.defer(ephemeral=True)
-            await asyncio.sleep(0.5)  # Brief delay for API cooldown
+            await asyncio.sleep(0.5) 
             
             await interaction.channel.send(**message_data)
             self.cooldowns[interaction.channel_id] = current_time
@@ -56,7 +53,7 @@ class MessageSender(commands.Cog):
         except FileNotFoundError:
             await interaction.response.send_message(f"File not found: {filename}.json", ephemeral=True)
         except discord.HTTPException as e:
-            await asyncio.sleep(1)  # Rate limit backoff
+            await asyncio.sleep(1) 
             await interaction.followup.send(f"Error: {str(e)}", ephemeral=True)
 
 async def setup(bot):

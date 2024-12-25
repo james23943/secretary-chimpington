@@ -8,14 +8,13 @@ class Source(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cooldowns = {}
-        self.COOLDOWN_DURATION = 5.0  # Seconds between command uses
+        self.COOLDOWN_DURATION = 5.0
 
     @app_commands.command(name="source", description="Get the link to the bot's source code and credits")
     async def source(self, interaction: discord.Interaction):
         user_id = interaction.user.id
         current_time = discord.utils.utcnow().timestamp()
-        
-        # Handle cooldown
+
         if user_id in self.cooldowns:
             remaining = self.COOLDOWN_DURATION - (current_time - self.cooldowns[user_id])
             if remaining > 0:

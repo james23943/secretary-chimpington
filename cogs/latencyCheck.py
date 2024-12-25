@@ -8,7 +8,7 @@ class Ping(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cooldowns: Dict[int, float] = {}
-        self.COOLDOWN_DURATION = 3.0  # Seconds between ping checks
+        self.COOLDOWN_DURATION = 3.0 
 
     @app_commands.command(name="ping", description="Check the bot's latency")
     async def ping(self, interaction: discord.Interaction):
@@ -31,7 +31,7 @@ class Ping(commands.Cog):
             latency = round(self.bot.latency * 1000)
             await interaction.response.send_message(f'Pong! Latency: {latency}ms')
         except discord.HTTPException:
-            await asyncio.sleep(1)  # Rate limit backoff
+            await asyncio.sleep(1)
             await interaction.response.send_message('Pong! (Latency check delayed)')
 
 async def setup(bot):
